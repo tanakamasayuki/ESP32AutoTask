@@ -1,0 +1,119 @@
+# ESP32AutoTask 技術メモ
+
+ESP32 の Arduino 環境向けに、FreeRTOS タスクの作成・管理を簡単にするヘルパーライブラリ（設計中）の仕様・設計メモです。`begin()` ひとつ（設定なし）でコア 0 / コア 1 に複数優先度のタスクを用意し、ユーザーが弱シンボルで提供されるフック関数を上書きすると、その処理が定期的に呼ばれます。フックを定義しなければ即終了し、無駄なタスクが残らないのが特徴です。
+
+## ねらい
+
+- FreeRTOS のタスク生成・ピン留め・優先度設定を隠蔽し、Arduino スケッチから最小限の手順で並列処理を始められるようにする。
+- デフォルトは「何もしない」構成にして、未使用タスクのオーバーヘッドをゼロにする。
+- ESP32 の 2 コアを意識しつつ、用途ごとに優先度レベルを分けたフックポイントを提供する。
+
+## フックの仕組み
+
+ライブラリ側で弱シンボルのフックを宣言し、タスクから定期的に呼び出します。ユーザーが同名の関数をスケッチ側で定義すると上書きされ、ループ的に実行されます。
+
+```cpp
+__attribute__((weak)) void LoopCore0_Low() {
+    vTaskDelete(NULL);  // 何もしないまま終了（デフォルト）
+}
+
+void TaskCore0_Low(void *pv) {
+    for (;;) {
+        LoopCore0_Low();  // ユーザーが上書きすればここが呼ばれる
+        delay(1);         // 実行間隔は設定で変えられるようにする想定
+    }
+}
+```
+
+考え方:
+- 弱シンボルを使うことで「定義しない限りコストゼロ」を実現。
+- それぞれのタスクは `xTaskCreatePinnedToCore` でコア固定し、優先度・スタックサイズ・実行間隔を設定から与える。
+- ループ内で `delay` / `vTaskDelay` を使い、他タスクをブロックしない。
+
+## 想定する API（案）
+
+設定なしの `begin()` を基本とし、必要なら優先度やスタックサイズだけを上書きできる最小構成のイメージです。実際の関数名や構造体は実装段階で調整します。
+
+```cpp
+#include <ESP32AutoTask.h>
+
+using namespace ESP32AutoTask;
+
+void setup() {
+    AutoTask.begin();              // デフォルト設定で開始（設定は省略可能）
+    // AutoTask.begin(4096);       // 全タスクのスタックサイズだけ共通で上書き
+}
+
+// フックを定義すると該当タスクが生き続ける
+void LoopCore0_Low() {
+    // コア 0・低優先度タスクで定期実行
+}
+
+void LoopCore1_Normal() {
+    // コア 1・通常優先度タスクで定期実行
+}
+
+// 設定を上書きしたい場合だけ構造体を渡す想定
+Config config = {
+    .core0 = {
+        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .normal = { .priority = 2, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .high   = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+    },
+    .core1 = {
+        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .normal = { .priority = 2, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .high   = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+    },
+};
+
+void setupWithConfig() {
+    AutoTask.begin(config);  // パラメータだけ上書き
+}
+```
+
+ポイント:
+- 設定を省略した場合は既定値でタスクを作成し、未定義フックは `vTaskDelete(NULL)` で即終了させるため無駄が少ない。
+- 優先度の既定値は「同一コア内で Low < Normal < High」を保ちつつ、Arduino の `loop()` と競合しない値を選ぶ。
+- 実行周期はミリ秒指定にし、`periodMs = 0` なら即座に再実行（ただし CPU 独占を避けるため 1ms 以上を推奨）。
+
+## 設計メモ: コア×優先度のフックをどう切るか
+
+- **コア 0 / コア 1 を分けるメリット**  
+  Wi-Fi/Bluetooth スタックや `loop()` は通常コア 1 側で動くため、コア 0 に重い処理を逃がすとユーザー UI のキビキビ感を保ちやすい。フックをコア別に持つのは合理的。
+
+- **優先度レベルのプリセット**  
+  3 段階（Low/Normal/High）程度が扱いやすい。利用者が直接 `priority` を上書きできるようにしつつ、デフォルト値を決めておくと初心者にも優しい。  
+  - Low: バックグラウンド（ロギング、軽い家事処理）  
+  - Normal: 一般的な周期処理  
+  - High: タイミングがシビアな処理。ただし割り込み級の処理は ISR を使う方針を明記する。
+
+- **タスク数の上限**  
+  最大でも 6 タスク（2 コア × 3 優先度）。ESP32 の RAM とスケジューラ負荷を考えると、これ以上は利用者に明示的な opt-in が必要。
+
+- **デフォルト動作**  
+  `begin()` を引数なしで呼ぶと各コア・各優先度のタスクを既定値で作成し、未定義フックは `vTaskDelete(NULL)` で即終了するため常駐オーバーヘッドがほぼゼロ。必要に応じて優先度や周期だけ上書きする。
+
+- **利用者が困りがちな点への配慮**  
+  - スタックサイズの既定値をドキュメント化し、足りなかった場合の症状と対処を記載。  
+
+## スタックサイズの考え方（初心者向けにシンプルを優先）
+
+- ターゲットは ESP32 初心者。優先度は固定プリセット（Low/Normal/High）で触らせず、スタックサイズだけ最低限触れるようにする方針が安全。
+- 典型的な利用ではタスクは 1〜2 本になる想定なので、全タスク共通のスタックサイズを 1 つ決める運用が最も迷いが少ない。
+- API の具体案:
+ 1. `begin()` … 引数なしでデフォルト設定を使用。
+ 2. `begin(stackBytes)` … 全タスク共通のスタックサイズだけを上書き（例: `AutoTask.begin(/*stackBytes=*/16384);`）。
+ 3. `begin(config)` … 上級者向け。優先度や周期、スタックサイズを個別に設定。初心者は触らない前提。
+- weak 関数でサイズを返す方式は「定義場所が増える」「型安全でない」ため初心者向きではないので不採用。
+- デフォルトの目安: `periodMs = 1`、`stackSize = ARDUINO_LOOP_STACK_SIZE`（ESP32 Arduino の標準は 8192 バイト、全タスク共通）。足りないときの症状（Guru Meditation / WDT / 例外）と増やし方の目安（例: 8192→16384）を併記する。
+
+## コアと優先度の例・既存 Arduino との違い
+
+- Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192B）として動く。Wi-Fi/BT などシステムタスクは主にコア0の高優先度で動作。
+- 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、既定優先度をおおよそ `Low=1 / Normal=2 / High=3` に置く想定。`loop()` と同等か少し上で回す処理は Normal、時間的にシビアなものは High、負荷の低い家事処理は Low に寄せる。
+- シングルコアの ESP32シリーズ（ESP32-SOLO / ESP32-C3 / C2 / C6 / S2 など）では Core1 向けフックも Core0 上で実行される（名前だけ分けて順序付けしているイメージ）。
+
+## ライセンス
+
+MIT License (`LICENSE` を参照)。
