@@ -101,7 +101,9 @@ ESP32AutoTask::AutoTask.begin(cfg);
 - パニック時に確認する項目: (1) スタック不足（`begin(stackBytes)` で増やす）、(2) 無限ループで `delay` を入れ忘れていないか、(3) 同じ優先度で重い処理を回していないか、(4) 共有リソース（I2C/SPI/Serial）への同時アクセスがないか。  
 - Serial/ログの影響: 高優先度タスクで大量の `Serial.print` を行うとブロックして他タスクが動けなくなることがあります。ログは低優先度でまとめて出すか、リングバッファに貯めて専用タスクで送る運用が安全です。  
 - 細かい制御が必要になったら: 本ライブラリで足りなければ、直接 FreeRTOS のタスク API（`xTaskCreatePinnedToCore` など）や通知・キューを使う方が望ましいです。このライブラリは「最初に学ぶための足場」として位置づけています。  
-- 追加の注意: 長時間ブロックする I/O を高優先度で回すのは避ける、スタック不足が疑わしければ `begin(stackBytes)` で増やす、ウォッチドッグ（WDT）を意識して `delay` を挟む、といった基本も守ってください。
+- 追加の注意: 長時間ブロックする I/O を高優先度で回すのは避ける、スタック不足が疑わしければ `begin(stackBytes)` で増やす、ウォッチドッグ（WDT）を意識して `delay` を挟む、といった基本も守ってください。  
+- FreeRTOS の TICK について: ESP32 Arduino のデフォルトでは 1ms ごとに TICK が入り、各コアで優先度の高いタスクから順に実行されます。`delay` を呼ぶとそのタスクは CPU を解放し、同じコア上の次のタスクに切り替わります。CPU を解放しないタスクがあると、そのコアで同等以下の優先度タスクは動けません。1ms 経過して次の TICK が来ると再び優先度順で実行が回ります。ESP-IDF のデフォルト TICK は 10ms なので、`vTaskDelay(1)` でも 10ms 待つ点が Arduino とは異なります。  
+- FreeRTOS API を直接使う場合: Arduino の `delay` は便利ですが、ESP-IDF では `vTaskDelay` / `vTaskDelayUntil` と `pdMS_TO_TICKS` を使います（例: `vTaskDelay(pdMS_TO_TICKS(1000))` は 100 TICK で 1000ms 待機）。  
 
 ## もっと詳しく
 

@@ -92,13 +92,18 @@ ESP32AutoTask::AutoTask.begin(cfg);
 - Core1 and `loop()`: Arduino `loop()` runs on Core1 at priority ~1. When placing user tasks on Core1, choose priorities relative to `loop()`.  
 - Same priority: Tasks on the same core and priority time-slice cooperatively. If you need distinct responsiveness, offset priorities instead of keeping them equal.  
 - Interrupts: They outrank tasks but should stay tiny. Do heavy work in tasks; send an event via notification/queue from the ISR.  
-- Why notifications: A high-priority task can block on a notification; when an interrupt sends the notification, that task resumes immediately, giving near–real-time response.  
-- Time accuracy: Task timing is not exact. Use hardware timers (interrupts) plus a notification to the task when you need tighter timing. `vTaskDelayUntil` helps reduce drift compared with plain delays.  
-- I2C/shared buses: Concurrent access from multiple tasks can panic/reset. Funnel I2C/SPI/Serial access through a dedicated task and send requests via queue/notification.  
 - High-priority task etiquette: Keep runtime short; heavier work should run at lower priority. Always yield with `delay`/`vTaskDelay` after work so lower-priority tasks can run; skipping waits can cause WDT/panics.  
+- I2C/shared buses: Concurrent access from multiple tasks can panic/reset. Funnel I2C/SPI/Serial access through a dedicated task and send requests via queue/notification.  
+- Task sync basics: Use notifications/queues/mutexes for sharing state. Notifications signal single events, queues pass data in order, mutexes guard shared resources. A dedicated task receiving I2C/SPI requests via queue avoids bus conflicts.  
+- Time accuracy: Task timing is not exact. Use hardware timers (interrupts) plus a notification to the task when you need tighter timing. `vTaskDelayUntil` helps reduce drift compared with plain delays.  
+- Why notifications: A high-priority task can block on a notification; when an interrupt sends the notification, that task resumes immediately, giving near–real-time response.  
+- WDT: Hogging the CPU too long trips the watchdog. Split heavy work and insert `delay`/`vTaskDelay`, or lower the priority to let others run.  
 - Panic checklist: (1) Stack shortage → try `begin(stackBytes)`, (2) missing `delay` in loops, (3) heavy work at same priority, (4) simultaneous access to shared resources.  
 - Serial/logging: Heavy `Serial.print` in high-priority tasks can block others. Buffer and flush from a lower-priority or dedicated logging task.  
-- When you need more control: If this helper feels limiting, switch to raw FreeRTOS APIs (`xTaskCreatePinnedToCore`, notifications, queues, mutexes) directly.
+- When you need more control: If this helper feels limiting, switch to raw FreeRTOS APIs (`xTaskCreatePinnedToCore`, notifications, queues, mutexes) directly.  
+- Extra tips: Avoid long blocking I/O at high priority; if stack seems tight, bump `begin(stackBytes)`; keep WDT in mind and insert delays.  
+- FreeRTOS tick timing: ESP32 Arduino uses a 1 ms tick, scheduling each core from highest priority downward every tick; calling `delay`/`vTaskDelay` yields the CPU. If a task never yields, same-core tasks of equal or lower priority cannot run. ESP-IDF defaults to a 10 ms tick, so `vTaskDelay(1)` waits 10 ms there.  
+- If using raw FreeRTOS APIs (ESP-IDF style): Use `vTaskDelay` / `vTaskDelayUntil` with `pdMS_TO_TICKS` for timing. Example: `vTaskDelay(pdMS_TO_TICKS(1000))` waits 100 ticks (1000 ms on Arduino’s 1 ms tick). IDF’s default tick is 10 ms, so `pdMS_TO_TICKS(1)` becomes 10 ms there.
 
 ## More
 
