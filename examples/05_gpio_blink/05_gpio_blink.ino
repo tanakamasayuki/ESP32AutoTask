@@ -18,8 +18,12 @@ void LoopCore1_Normal()
 {
   static bool state = false;
   digitalWrite(LED_PIN, state ? HIGH : LOW);
-  Serial.printf("[LED] pin=%d state=%s\n", LED_PIN, state ? "ON" : "OFF");
+  Serial.printf("[LED] pin=%d state=%s millis=%lu\n", LED_PIN, state ? "ON" : "OFF", millis());
   state = !state;
+
+  // en: Even if there's a long processing in the loop, the next call is adjusted by periodMs.
+  // ja: Loop内で長時間処理をしてもperiodMsで次回呼び出しが調整される。
+  delay(100);
 }
 
 void setup()

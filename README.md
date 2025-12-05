@@ -85,6 +85,21 @@ cfg.core1.high.priority = 5;  // Raise only Core1 high-priority hook
 ESP32AutoTask::AutoTask.begin(cfg);
 ```
 
+## Multicore & Priority Tips (for beginners leveling up)
+
+- What multicore means: ESP32 typically has two cores (Core0/Core1); the OS schedules tasks across them.  
+- Core0 and Wi‑Fi/BT: When wireless is enabled, Core0 runs high-priority system tasks, so user tasks on Core0 may jitter. Without wireless, Core0 is lighter and can host heavier work.  
+- Core1 and `loop()`: Arduino `loop()` runs on Core1 at priority ~1. When placing user tasks on Core1, choose priorities relative to `loop()`.  
+- Same priority: Tasks on the same core and priority time-slice cooperatively. If you need distinct responsiveness, offset priorities instead of keeping them equal.  
+- Interrupts: They outrank tasks but should stay tiny. Do heavy work in tasks; send an event via notification/queue from the ISR.  
+- Why notifications: A high-priority task can block on a notification; when an interrupt sends the notification, that task resumes immediately, giving near–real-time response.  
+- Time accuracy: Task timing is not exact. Use hardware timers (interrupts) plus a notification to the task when you need tighter timing. `vTaskDelayUntil` helps reduce drift compared with plain delays.  
+- I2C/shared buses: Concurrent access from multiple tasks can panic/reset. Funnel I2C/SPI/Serial access through a dedicated task and send requests via queue/notification.  
+- High-priority task etiquette: Keep runtime short; heavier work should run at lower priority. Always yield with `delay`/`vTaskDelay` after work so lower-priority tasks can run; skipping waits can cause WDT/panics.  
+- Panic checklist: (1) Stack shortage → try `begin(stackBytes)`, (2) missing `delay` in loops, (3) heavy work at same priority, (4) simultaneous access to shared resources.  
+- Serial/logging: Heavy `Serial.print` in high-priority tasks can block others. Buffer and flush from a lower-priority or dedicated logging task.  
+- When you need more control: If this helper feels limiting, switch to raw FreeRTOS APIs (`xTaskCreatePinnedToCore`, notifications, queues, mutexes) directly.
+
 ## More
 
 Design notes and rationale are in `SPEC.ja.md` (Japanese).

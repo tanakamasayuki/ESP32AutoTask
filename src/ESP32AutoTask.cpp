@@ -32,10 +32,11 @@ namespace ESP32AutoTask
 
     void taskLoop(uint32_t periodMs, void (*fn)())
     {
+      TickType_t lastWake = xTaskGetTickCount();
       for (;;)
       {
         fn();
-        delay(periodMs); // delay(0) yields; no special case needed
+        vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(periodMs));
       }
     }
 
