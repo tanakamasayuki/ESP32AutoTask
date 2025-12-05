@@ -5,6 +5,14 @@ ESP32 の Arduino 環境で FreeRTOS タスクを手軽に使うためのヘル�
 デフォルト値:
 - 実行周期 `periodMs = 1`。
 - スタックサイズ `stackSize = ARDUINO_LOOP_STACK_SIZE`（ESP32 Arduino の標準は 8192 バイト）。足りないときは `begin(stackBytes)` で増やす。
+- `periodMs` を 0 にすると最速で実行されますが、低優先度タスクが走りにくくなるため 1 以上を推奨します。
+- 優先度は FreeRTOS の範囲（0〜24; 数字が大きいほど高い）に収めてください。初心者は 1〜4 程度にとどめるのが安全です。
+
+## コアと優先度のイメージ
+
+- Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192B）として動いています。Wi-Fi/BT などのシステムタスクは主にコア0の高優先度で動きます。
+- 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、デフォルト優先度を `1 / 2 / 3` に設定する想定です。`loop()` と同等か少し上の優先度で回したい処理は Normal、より重い処理は High、バックグラウンドの軽作業は Low を使う、と覚えると良いです。
+- シングルコアの ESP32シリーズ (例: ESP32-SOLO / ESP32-C3 / C2 / C6 / S2) では、Core1 向けフックも Core0 で実行されます（実行順だけ分けているイメージ）。
 
 ## 使い方（最短）
 
@@ -56,18 +64,18 @@ void setup() {
 Config cfg = {
     .core0 = {
         .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 2, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
     },
     .core1 = {
         .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 2, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
     },
 };
 
 void setup() {
-    AutoTask.begin(cfg);  // デフォルトから一部パラメータを上書き
+    AutoTask.begin(cfg);  // 全パラメータを指定
 }
 ```
 
@@ -75,15 +83,9 @@ void setup() {
 
 ```cpp
 Config cfg;  // デフォルト値で初期化される想定
-cfg.core1.high.priority = 4;  // コア1・高優先度だけ強めに
+cfg.core1.high.priority = 5;  // コア1・高優先度だけ強めに
 AutoTask.begin(cfg);
 ```
-
-## コアと優先度のイメージ
-
-- Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192B）として動いています。Wi-Fi/BT などのシステムタスクは主にコア0の高優先度で動きます。
-- 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、デフォルト優先度を `1 / 2 / 3` に設定する想定です。`loop()` と同等か少し上の優先度で回したい処理は Normal、より重い処理は High、家事処理は Low を使う、と覚えると良いです。
-- シングルコアの ESP32シリーズ (例: ESP32-SOLO / ESP32-C3 / C2 / C6 / S2) では、Core1 向けフックも Core0 で実行されます（実行順だけ分けているイメージ）。
 
 ## もっと詳しく
 

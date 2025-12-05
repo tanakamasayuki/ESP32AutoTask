@@ -53,22 +53,22 @@ void LoopCore1_Normal() {
     // コア 1・通常優先度タスクで定期実行
 }
 
-// 設定を上書きしたい場合だけ構造体を渡す想定
+// 全パラメータを指定したい場合
 Config config = {
     .core0 = {
         .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 2, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
     },
     .core1 = {
         .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 2, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
+        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
     },
 };
 
 void setupWithConfig() {
-    AutoTask.begin(config);  // パラメータだけ上書き
+    AutoTask.begin(config);  // 全パラメータを指定
 }
 ```
 
@@ -84,7 +84,7 @@ void setupWithConfig() {
 
 - **優先度レベルのプリセット**  
   3 段階（Low/Normal/High）程度が扱いやすい。利用者が直接 `priority` を上書きできるようにしつつ、デフォルト値を決めておくと初心者にも優しい。  
-  - Low: バックグラウンド（ロギング、軽い家事処理）  
+  - Low: バックグラウンド（ロギング、軽いメンテナンス処理）  
   - Normal: 一般的な周期処理  
   - High: タイミングがシビアな処理。ただし割り込み級の処理は ISR を使う方針を明記する。
 
@@ -102,16 +102,18 @@ void setupWithConfig() {
 - ターゲットは ESP32 初心者。優先度は固定プリセット（Low/Normal/High）で触らせず、スタックサイズだけ最低限触れるようにする方針が安全。
 - 典型的な利用ではタスクは 1〜2 本になる想定なので、全タスク共通のスタックサイズを 1 つ決める運用が最も迷いが少ない。
 - API の具体案:
- 1. `begin()` … 引数なしでデフォルト設定を使用。
- 2. `begin(stackBytes)` … 全タスク共通のスタックサイズだけを上書き（例: `AutoTask.begin(/*stackBytes=*/16384);`）。
- 3. `begin(config)` … 上級者向け。優先度や周期、スタックサイズを個別に設定。初心者は触らない前提。
+  1. `begin()` … 引数なしでデフォルト設定を使用。
+  2. `begin(stackBytes)` … 全タスク共通のスタックサイズだけを上書き（例: `AutoTask.begin(/*stackBytes=*/16384);`）。
+  3. `begin(config)` … 上級者向け。優先度や周期、スタックサイズを個別に設定。初心者は触らない前提。
 - weak 関数でサイズを返す方式は「定義場所が増える」「型安全でない」ため初心者向きではないので不採用。
 - デフォルトの目安: `periodMs = 1`、`stackSize = ARDUINO_LOOP_STACK_SIZE`（ESP32 Arduino の標準は 8192 バイト、全タスク共通）。足りないときの症状（Guru Meditation / WDT / 例外）と増やし方の目安（例: 8192→16384）を併記する。
+- `periodMs = 0` にすると最速実行だが低優先度タスクが走りにくくなるため、原則 1 以上を推奨。
+- 優先度の範囲は FreeRTOS の `0〜24`（大きいほど高い）。初心者向けのプリセットは 1〜4 付近で収める。
 
 ## コアと優先度の例・既存 Arduino との違い
 
 - Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192B）として動く。Wi-Fi/BT などシステムタスクは主にコア0の高優先度で動作。
-- 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、既定優先度をおおよそ `Low=1 / Normal=2 / High=3` に置く想定。`loop()` と同等か少し上で回す処理は Normal、時間的にシビアなものは High、負荷の低い家事処理は Low に寄せる。
+- 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、既定優先度をおおよそ `Low=1 / Normal=3 / High=4` に置く想定。`loop()` の少し上で回す処理は Normal、時間的にシビアなものは High、負荷の低いバックグラウンド処理は Low に寄せる。
 - シングルコアの ESP32シリーズ（ESP32-SOLO / ESP32-C3 / C2 / C6 / S2 など）では Core1 向けフックも Core0 上で実行される（名前だけ分けて順序付けしているイメージ）。
 
 ## ライセンス
