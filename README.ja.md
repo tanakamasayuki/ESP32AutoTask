@@ -9,6 +9,7 @@ ESP32 の Arduino 環境で FreeRTOS タスクを手軽に使うためのヘル�
 - スタックサイズ `stackSize = ARDUINO_LOOP_STACK_SIZE`（ESP32 Arduino の標準は 8192 バイト）。足りないときは `begin(stackBytes)` で増やす。
 - `periodMs` を 0 にすると最速で実行されますが、低優先度タスクが走りにくくなるため 1 以上を推奨します。
 - 優先度は FreeRTOS の範囲（0〜24; 数字が大きいほど高い）に収めてください。初心者は 1〜4 程度にとどめるのが安全です。
+  - デフォルト優先度: Low=1, Normal=3, High=4（Arduino の `loop()` が優先度 ~1 なので少し上にずらしています）。
 
 ## コアと優先度のイメージ
 

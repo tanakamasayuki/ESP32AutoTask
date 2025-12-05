@@ -9,11 +9,12 @@ Defaults:
 - `stackSize = ARDUINO_LOOP_STACK_SIZE` (ESP32 Arduino’s default: 8192 bytes). If you need more, pass `begin(stackBytes)`.
 - Setting `periodMs = 0` runs as fast as possible but can starve lower-priority tasks; keep it ≥1.
 - Priorities must stay within FreeRTOS limits (`0–24`, higher is higher). For beginners, stick to ~`1–4`.
+  - Default priorities: Low=1, Normal=3, High=4 (offset above the Arduino `loop()` task which is around 1).
 
 ## Cores and priority (mental model)
 
 - Arduino’s `loop()` runs as a task pinned to Core 1 (priority ~1, stack 8192B). Wi‑Fi/BT system tasks mainly occupy Core 0 at higher priority.
-- This library offers Low / Normal / High hooks on both Core 0 and Core 1, with default priorities roughly `1 / 3 / 4`. Use Normal for work similar to `loop()`, High for heavier/urgent work, Low for light background chores.
+- This library offers Low / Normal / High hooks on both Core 0 and Core 1, with default priorities `1 / 3 / 4`. Use Normal for work similar to `loop()` but a bit higher priority, High for heavier/urgent work, Low for light background chores.
 - On single-core ESP32 parts (ESP32-SOLO / ESP32-C3 / C2 / C6 / S2, etc.), Core1 hooks also run on Core0 (only the ordering is separated).
 
 ## Quick start

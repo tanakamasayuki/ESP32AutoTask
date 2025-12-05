@@ -74,7 +74,7 @@ void setupWithConfig() {
 
 ポイント:
 - 設定を省略した場合は既定値でタスクを作成し、未定義フックは `vTaskDelete(NULL)` で即終了させるため無駄が少ない。
-- 優先度の既定値は「同一コア内で Low < Normal < High」を保ちつつ、Arduino の `loop()` と競合しない値を選ぶ。
+- 優先度の既定値は「同一コア内で Low < Normal < High」を保ちつつ、Arduino の `loop()`（優先度 ~1）と競合しないよう Low=1 / Normal=3 / High=4 を想定。
 - 実行周期はミリ秒指定にし、`periodMs = 0` なら即座に再実行（ただし CPU 独占を避けるため 1ms 以上を推奨）。
 
 ## 設計メモ: コア×優先度のフックをどう切るか
