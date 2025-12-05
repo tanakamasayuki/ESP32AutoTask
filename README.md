@@ -9,12 +9,12 @@ Defaults:
 - `stackSize = ARDUINO_LOOP_STACK_SIZE` (ESP32 Arduino’s default: 8192 bytes). If you need more, pass `begin(stackBytes)`.
 - Setting `periodMs = 0` runs as fast as possible but can starve lower-priority tasks; keep it ≥1.
 - Priorities must stay within FreeRTOS limits (`0–24`, higher is higher). For beginners, stick to ~`1–4`.
-  - Default priorities: Low=1, Normal=3, High=4 (offset above the Arduino `loop()` task which is around 1).
+  - Default priorities: Low=1, Normal=2, High=3 (Core1 Low matches the Arduino `loop()` priority ~1; avoid long non-`delay` work there).
 
 ## Cores and priority (mental model)
 
 - Arduino’s `loop()` runs as a task pinned to Core 1 (priority ~1, stack 8192B). Wi‑Fi/BT system tasks mainly occupy Core 0 at higher priority.
-- This library offers Low / Normal / High hooks on both Core 0 and Core 1, with default priorities `1 / 3 / 4`. Use Normal for work similar to `loop()` but a bit higher priority, High for heavier/urgent work, Low for light background chores.
+- This library offers Low / Normal / High hooks on both Core 0 and Core 1, with default priorities `1 / 2 / 3`. Use Normal for work similar to `loop()` but a bit higher priority, High for heavier/urgent work, Low for light background chores. Core1 Low is the same priority as `loop()` (~1); long, non-yielding work there will slow `loop()`, so keep it short and include delays.
 - On single-core ESP32 parts (ESP32-SOLO / ESP32-C3 / C2 / C6 / S2, etc.), Core1 hooks also run on Core0 (only the ordering is separated).
 
 ## Quick start
@@ -67,11 +67,11 @@ Pass a `Config` when you need to adjust priority, stack size, or period per hook
 void setup() {
   ESP32AutoTask::Config cfg;
   cfg.core0.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core0.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core0.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.normal = {2, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.high = {3, ARDUINO_LOOP_STACK_SIZE, 1};
   cfg.core1.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core1.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core1.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.normal = {2, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.high = {3, ARDUINO_LOOP_STACK_SIZE, 1};
 
   ESP32AutoTask::AutoTask.begin(cfg);  // Use fully specified parameters
 }
@@ -81,7 +81,7 @@ Common tweak: keep defaults but bump a single value.
 
 ```cpp
 ESP32AutoTask::Config cfg;  // Initialized with defaults
-cfg.core1.high.priority = 5;  // Raise only Core1 high-priority hook
+cfg.core1.high.priority = 4;  // Raise only Core1 high-priority hook
 ESP32AutoTask::AutoTask.begin(cfg);
 ```
 

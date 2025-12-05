@@ -18,11 +18,11 @@ namespace ESP32AutoTask
   Config::Config()
   {
     core0.low = {1, kDefaultStackSize, kDefaultPeriodMs};
-    core0.normal = {3, kDefaultStackSize, kDefaultPeriodMs};
-    core0.high = {4, kDefaultStackSize, kDefaultPeriodMs};
+    core0.normal = {2, kDefaultStackSize, kDefaultPeriodMs};
+    core0.high = {3, kDefaultStackSize, kDefaultPeriodMs};
     core1.low = {1, kDefaultStackSize, kDefaultPeriodMs};
-    core1.normal = {3, kDefaultStackSize, kDefaultPeriodMs};
-    core1.high = {4, kDefaultStackSize, kDefaultPeriodMs};
+    core1.normal = {2, kDefaultStackSize, kDefaultPeriodMs};
+    core1.high = {3, kDefaultStackSize, kDefaultPeriodMs};
   }
 
   namespace

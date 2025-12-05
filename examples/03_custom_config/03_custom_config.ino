@@ -33,7 +33,7 @@ void setup()
   // ja: スタックはデフォルトのまま、優先度と周期だけ調整。
   cfg.core0.low.priority = 1;  // en/ja: leave as default
   cfg.core0.low.periodMs = 10; // en: slow down Low to 10ms / ja: Lowを10ms周期に
-  cfg.core1.high.priority = 5; // en: boost Core1 High / ja: Core1 Highを少し上げる
+  cfg.core1.high.priority = 4; // en: boost Core1 High / ja: Core1 Highを少し上げる
   cfg.core1.high.periodMs = 1; // en/ja: keep tight loop
 
   ESP32AutoTask::AutoTask.begin(cfg);

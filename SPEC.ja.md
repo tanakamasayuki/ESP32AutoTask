@@ -56,11 +56,11 @@ void LoopCore1_Normal() {
 void setupWithConfig() {
   ESP32AutoTask::Config cfg;
   cfg.core0.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core0.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core0.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.normal = {2, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.high = {3, ARDUINO_LOOP_STACK_SIZE, 1};
   cfg.core1.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core1.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core1.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.normal = {2, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.high = {3, ARDUINO_LOOP_STACK_SIZE, 1};
 
   AutoTask.begin(cfg);  // 全パラメータを指定
 }
@@ -68,7 +68,7 @@ void setupWithConfig() {
 
 ポイント:
 - 設定を省略した場合は既定値でタスクを作成し、未定義フックは `vTaskDelete(NULL)` で即終了させるため無駄が少ない。
-- 優先度の既定値は「同一コア内で Low < Normal < High」を保ちつつ、Arduino の `loop()`（優先度 ~1）と競合しないよう Low=1 / Normal=3 / High=4 を想定。
+- 優先度の既定値は「同一コア内で Low < Normal < High」を保ちつつ、Arduino の `loop()`（優先度 ~1）と競合しないよう Low=1 / Normal=2 / High=3 を想定。Core1 Low は `loop()` と同じ優先度なので長時間ブロックは避ける。
 - 実行周期はミリ秒指定にし、`periodMs = 0` なら即座に再実行（ただし CPU 独占を避けるため 1ms 以上を推奨）。
 
 ## 設計メモ: コア×優先度のフックをどう切るか
@@ -107,7 +107,7 @@ void setupWithConfig() {
 ## コアと優先度の例・既存 Arduino との違い
 
 - Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192B）として動く。Wi-Fi/BT などシステムタスクは主にコア0の高優先度で動作。
-- 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、既定優先度をおおよそ `Low=1 / Normal=3 / High=4` に置く想定。`loop()` の少し上で回す処理は Normal、時間的にシビアなものは High、負荷の低いバックグラウンド処理は Low に寄せる。
+- 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、既定優先度をおおよそ `Low=1 / Normal=2 / High=3` に置く想定。`loop()` と同じ優先度で回したい処理は Core1 Low（長時間ブロックは避ける）、少し上で回す処理は Normal、時間的にシビアなものは High、負荷の低いバックグラウンド処理は Low に寄せる。
 - シングルコアの ESP32シリーズ（ESP32-SOLO / ESP32-C3 / C2 / C6 / S2 など）では Core1 向けフックも Core0 上で実行される（名前だけ分けて順序付けしているイメージ）。
 
 ## ライセンス

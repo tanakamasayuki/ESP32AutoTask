@@ -21,11 +21,11 @@ void setup()
   // ja: デフォルト生成後、全フィールドを明示的に代入
   ESP32AutoTask::Config cfg;
   cfg.core0.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core0.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core0.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.normal = {2, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.high = {3, ARDUINO_LOOP_STACK_SIZE, 1};
   cfg.core1.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core1.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
-  cfg.core1.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.normal = {2, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.high = {3, ARDUINO_LOOP_STACK_SIZE, 1};
 
   ESP32AutoTask::AutoTask.begin(cfg);
 }
