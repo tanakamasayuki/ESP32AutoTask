@@ -27,7 +27,7 @@ Defaults:
 #include <ESP32AutoTask.h>
 
 void setup() {
-    AutoTask.begin();  // Use defaults
+    ESP32AutoTask::AutoTask.begin();  // Use defaults
 }
 
 // Define only the hooks you need
@@ -53,7 +53,7 @@ If you suspect the default stack is too small, override the common stack size (a
 
 ```cpp
 void setup() {
-    AutoTask.begin(/*stackBytes=*/16384);  // Override only the stack size
+    ESP32AutoTask::AutoTask.begin(/*stackBytes=*/16384);  // Override only the stack size
 }
 ```
 
@@ -64,30 +64,25 @@ void setup() {
 Pass a `Config` when you need to adjust priority, stack size, or period per hook.
 
 ```cpp
-Config cfg = {
-    .core0 = {
-        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-    },
-    .core1 = {
-        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-    },
-};
-
 void setup() {
-    AutoTask.begin(cfg);  // Use fully specified parameters
+  ESP32AutoTask::Config cfg;
+  cfg.core0.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+
+  ESP32AutoTask::AutoTask.begin(cfg);  // Use fully specified parameters
 }
 ```
 
 Common tweak: keep defaults but bump a single value.
 
 ```cpp
-Config cfg;  // Initialized with defaults
+ESP32AutoTask::Config cfg;  // Initialized with defaults
 cfg.core1.high.priority = 5;  // Raise only Core1 high-priority hook
-AutoTask.begin(cfg);
+ESP32AutoTask::AutoTask.begin(cfg);
 ```
 
 ## More

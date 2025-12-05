@@ -27,7 +27,7 @@ ESP32 の Arduino 環境で FreeRTOS タスクを手軽に使うためのヘル�
 #include <ESP32AutoTask.h>
 
 void setup() {
-    AutoTask.begin();  // デフォルト設定でタスクを用意
+    ESP32AutoTask::AutoTask.begin();  // デフォルト設定でタスクを用意
 }
 
 // 必要なフックだけ定義すれば動く
@@ -53,7 +53,7 @@ void LoopCore1_High() {
 
 ```cpp
 void setup() {
-    AutoTask.begin(/*stackBytes=*/16384);  // 既定値からスタックだけ上書き
+    ESP32AutoTask::AutoTask.begin(/*stackBytes=*/16384);  // 既定値からスタックだけ上書き
 }
 ```
 
@@ -64,30 +64,25 @@ void setup() {
 優先度やスタックサイズ、実行周期を変えたい場合だけ `Config` を渡します。
 
 ```cpp
-Config cfg = {
-    .core0 = {
-        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-    },
-    .core1 = {
-        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-    },
-};
-
 void setup() {
-    AutoTask.begin(cfg);  // 全パラメータを指定
+  ESP32AutoTask::Config cfg;
+  cfg.core0.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+
+  ESP32AutoTask::AutoTask.begin(cfg);  // 全パラメータを指定
 }
 ```
 
 よくある使い方（例）: デフォルト値をベースに一部だけ変える。
 
 ```cpp
-Config cfg;  // デフォルト値で初期化される想定
+ESP32AutoTask::Config cfg;  // デフォルト値で初期化される想定
 cfg.core1.high.priority = 5;  // コア1・高優先度だけ強めに
-AutoTask.begin(cfg);
+ESP32AutoTask::AutoTask.begin(cfg);
 ```
 
 ## もっと詳しく

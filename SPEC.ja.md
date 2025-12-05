@@ -53,22 +53,16 @@ void LoopCore1_Normal() {
     // コア 1・通常優先度タスクで定期実行
 }
 
-// 全パラメータを指定したい場合
-Config config = {
-    .core0 = {
-        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-    },
-    .core1 = {
-        .low    = { .priority = 1, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .normal = { .priority = 3, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-        .high   = { .priority = 4, .stackSize = ARDUINO_LOOP_STACK_SIZE, .periodMs = 1 },
-    },
-};
-
 void setupWithConfig() {
-    AutoTask.begin(config);  // 全パラメータを指定
+  ESP32AutoTask::Config cfg;
+  cfg.core0.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core0.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.low = {1, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.normal = {3, ARDUINO_LOOP_STACK_SIZE, 1};
+  cfg.core1.high = {4, ARDUINO_LOOP_STACK_SIZE, 1};
+
+  AutoTask.begin(cfg);  // 全パラメータを指定
 }
 ```
 
