@@ -1,9 +1,7 @@
 #include "ESP32AutoTask.h"
 
-#ifdef ARDUINO_ARCH_ESP32
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#endif
 
 namespace ESP32AutoTask
 {
@@ -19,7 +17,6 @@ namespace ESP32AutoTask
     core1.high = {4, kDefaultStackSize, kDefaultPeriodMs};
   }
 
-#ifdef ARDUINO_ARCH_ESP32
   // Weak hook defaults: exit immediately to avoid overhead if not overridden.
   __attribute__((weak)) void LoopCore0_Low() { vTaskDelete(nullptr); }
   __attribute__((weak)) void LoopCore0_Normal() { vTaskDelete(nullptr); }
@@ -70,15 +67,6 @@ namespace ESP32AutoTask
     }
 
   } // namespace
-#else
-  // Non-ESP32 builds: provide empty hooks so linking succeeds.
-  void LoopCore0_Low() {}
-  void LoopCore0_Normal() {}
-  void LoopCore0_High() {}
-  void LoopCore1_Low() {}
-  void LoopCore1_Normal() {}
-  void LoopCore1_High() {}
-#endif // ARDUINO_ARCH_ESP32
 
   void AutoTaskClass::begin()
   {
@@ -110,7 +98,6 @@ namespace ESP32AutoTask
 
   void AutoTaskClass::startTasks(const Config &config)
   {
-#ifdef ARDUINO_ARCH_ESP32
     g_config = config;
 
     createTask("AT0L", TaskCore0Low, g_config.core0.low, 0, &hCore0Low);
@@ -119,14 +106,10 @@ namespace ESP32AutoTask
     createTask("AT1L", TaskCore1Low, g_config.core1.low, 1, &hCore1Low);
     createTask("AT1N", TaskCore1Normal, g_config.core1.normal, 1, &hCore1Normal);
     createTask("AT1H", TaskCore1High, g_config.core1.high, 1, &hCore1High);
-#else
-    (void)config;
-#endif
   }
 
   void AutoTaskClass::stopTasks()
   {
-#ifdef ARDUINO_ARCH_ESP32
     if (hCore0Low)
     {
       vTaskDelete(hCore0Low);
@@ -157,7 +140,6 @@ namespace ESP32AutoTask
       vTaskDelete(hCore1High);
       hCore1High = nullptr;
     }
-#endif
   }
 
   AutoTaskClass AutoTask;
