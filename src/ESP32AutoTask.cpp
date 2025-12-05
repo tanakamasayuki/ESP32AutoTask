@@ -3,6 +3,14 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+// Weak hook defaults in the global namespace: exit immediately to avoid overhead if not overridden.
+__attribute__((weak)) void LoopCore0_Low() { vTaskDelete(nullptr); }
+__attribute__((weak)) void LoopCore0_Normal() { vTaskDelete(nullptr); }
+__attribute__((weak)) void LoopCore0_High() { vTaskDelete(nullptr); }
+__attribute__((weak)) void LoopCore1_Low() { vTaskDelete(nullptr); }
+__attribute__((weak)) void LoopCore1_Normal() { vTaskDelete(nullptr); }
+__attribute__((weak)) void LoopCore1_High() { vTaskDelete(nullptr); }
+
 namespace ESP32AutoTask
 {
 
@@ -16,14 +24,6 @@ namespace ESP32AutoTask
     core1.normal = {3, kDefaultStackSize, kDefaultPeriodMs};
     core1.high = {4, kDefaultStackSize, kDefaultPeriodMs};
   }
-
-  // Weak hook defaults: exit immediately to avoid overhead if not overridden.
-  __attribute__((weak)) void LoopCore0_Low() { vTaskDelete(nullptr); }
-  __attribute__((weak)) void LoopCore0_Normal() { vTaskDelete(nullptr); }
-  __attribute__((weak)) void LoopCore0_High() { vTaskDelete(nullptr); }
-  __attribute__((weak)) void LoopCore1_Low() { vTaskDelete(nullptr); }
-  __attribute__((weak)) void LoopCore1_Normal() { vTaskDelete(nullptr); }
-  __attribute__((weak)) void LoopCore1_High() { vTaskDelete(nullptr); }
 
   namespace
   {
@@ -39,12 +39,12 @@ namespace ESP32AutoTask
       }
     }
 
-    void TaskCore0Low(void *) { taskLoop(g_config.core0.low.periodMs, LoopCore0_Low); }
-    void TaskCore0Normal(void *) { taskLoop(g_config.core0.normal.periodMs, LoopCore0_Normal); }
-    void TaskCore0High(void *) { taskLoop(g_config.core0.high.periodMs, LoopCore0_High); }
-    void TaskCore1Low(void *) { taskLoop(g_config.core1.low.periodMs, LoopCore1_Low); }
-    void TaskCore1Normal(void *) { taskLoop(g_config.core1.normal.periodMs, LoopCore1_Normal); }
-    void TaskCore1High(void *) { taskLoop(g_config.core1.high.periodMs, LoopCore1_High); }
+    void TaskCore0Low(void *) { taskLoop(g_config.core0.low.periodMs, ::LoopCore0_Low); }
+    void TaskCore0Normal(void *) { taskLoop(g_config.core0.normal.periodMs, ::LoopCore0_Normal); }
+    void TaskCore0High(void *) { taskLoop(g_config.core0.high.periodMs, ::LoopCore0_High); }
+    void TaskCore1Low(void *) { taskLoop(g_config.core1.low.periodMs, ::LoopCore1_Low); }
+    void TaskCore1Normal(void *) { taskLoop(g_config.core1.normal.periodMs, ::LoopCore1_Normal); }
+    void TaskCore1High(void *) { taskLoop(g_config.core1.high.periodMs, ::LoopCore1_High); }
 
   } // namespace
 

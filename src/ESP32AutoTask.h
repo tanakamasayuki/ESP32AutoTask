@@ -3,6 +3,14 @@
 #include <Arduino.h>
 #include <cstdint>
 
+// Hook prototypes (user can override these in their sketch; global namespace for simplicity)
+void LoopCore0_Low();
+void LoopCore0_Normal();
+void LoopCore0_High();
+void LoopCore1_Low();
+void LoopCore1_Normal();
+void LoopCore1_High();
+
 namespace ESP32AutoTask
 {
 
@@ -35,14 +43,6 @@ namespace ESP32AutoTask
 
     Config(); // initializes with defaults
   };
-
-  // Hook prototypes (user can override these in their sketch)
-  void LoopCore0_Low();
-  void LoopCore0_Normal();
-  void LoopCore0_High();
-  void LoopCore1_Low();
-  void LoopCore1_Normal();
-  void LoopCore1_High();
 
   class AutoTaskClass
   {
