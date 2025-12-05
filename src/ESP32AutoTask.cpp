@@ -29,12 +29,6 @@ namespace ESP32AutoTask
   {
 
     Config g_config{};
-    TaskHandle_t hCore0Low = nullptr;
-    TaskHandle_t hCore0Normal = nullptr;
-    TaskHandle_t hCore0High = nullptr;
-    TaskHandle_t hCore1Low = nullptr;
-    TaskHandle_t hCore1Normal = nullptr;
-    TaskHandle_t hCore1High = nullptr;
 
     void taskLoop(uint32_t periodMs, void (*fn)())
     {
@@ -51,20 +45,6 @@ namespace ESP32AutoTask
     void TaskCore1Low(void *) { taskLoop(g_config.core1.low.periodMs, LoopCore1_Low); }
     void TaskCore1Normal(void *) { taskLoop(g_config.core1.normal.periodMs, LoopCore1_Normal); }
     void TaskCore1High(void *) { taskLoop(g_config.core1.high.periodMs, LoopCore1_High); }
-
-    void createTask(const char *name,
-                    TaskFunction_t fn,
-                    const TaskConfig &cfg,
-                    UBaseType_t core,
-                    TaskHandle_t *handle)
-    {
-      if (*handle)
-      {
-        vTaskDelete(*handle);
-        *handle = nullptr;
-      }
-      xTaskCreatePinnedToCore(fn, name, cfg.stackSize, nullptr, cfg.priority, handle, core);
-    }
 
   } // namespace
 
@@ -91,55 +71,24 @@ namespace ESP32AutoTask
     startTasks(config);
   }
 
-  void AutoTaskClass::end()
-  {
-    stopTasks();
-  }
-
   void AutoTaskClass::startTasks(const Config &config)
   {
+    if (initialized_)
+    {
+      return;
+    }
+
     g_config = config;
+    const UBaseType_t coreForCore1 = (CONFIG_FREERTOS_NUMBER_OF_CORES > 1) ? 1 : 0;
 
-    createTask("AT0L", TaskCore0Low, g_config.core0.low, 0, &hCore0Low);
-    createTask("AT0N", TaskCore0Normal, g_config.core0.normal, 0, &hCore0Normal);
-    createTask("AT0H", TaskCore0High, g_config.core0.high, 0, &hCore0High);
-    createTask("AT1L", TaskCore1Low, g_config.core1.low, 1, &hCore1Low);
-    createTask("AT1N", TaskCore1Normal, g_config.core1.normal, 1, &hCore1Normal);
-    createTask("AT1H", TaskCore1High, g_config.core1.high, 1, &hCore1High);
-  }
+    xTaskCreatePinnedToCore(TaskCore0Low, "AT0L", g_config.core0.low.stackSize, nullptr, g_config.core0.low.priority, nullptr, 0);
+    xTaskCreatePinnedToCore(TaskCore0Normal, "AT0N", g_config.core0.normal.stackSize, nullptr, g_config.core0.normal.priority, nullptr, 0);
+    xTaskCreatePinnedToCore(TaskCore0High, "AT0H", g_config.core0.high.stackSize, nullptr, g_config.core0.high.priority, nullptr, 0);
+    xTaskCreatePinnedToCore(TaskCore1Low, "AT1L", g_config.core1.low.stackSize, nullptr, g_config.core1.low.priority, nullptr, coreForCore1);
+    xTaskCreatePinnedToCore(TaskCore1Normal, "AT1N", g_config.core1.normal.stackSize, nullptr, g_config.core1.normal.priority, nullptr, coreForCore1);
+    xTaskCreatePinnedToCore(TaskCore1High, "AT1H", g_config.core1.high.stackSize, nullptr, g_config.core1.high.priority, nullptr, coreForCore1);
 
-  void AutoTaskClass::stopTasks()
-  {
-    if (hCore0Low)
-    {
-      vTaskDelete(hCore0Low);
-      hCore0Low = nullptr;
-    }
-    if (hCore0Normal)
-    {
-      vTaskDelete(hCore0Normal);
-      hCore0Normal = nullptr;
-    }
-    if (hCore0High)
-    {
-      vTaskDelete(hCore0High);
-      hCore0High = nullptr;
-    }
-    if (hCore1Low)
-    {
-      vTaskDelete(hCore1Low);
-      hCore1Low = nullptr;
-    }
-    if (hCore1Normal)
-    {
-      vTaskDelete(hCore1Normal);
-      hCore1Normal = nullptr;
-    }
-    if (hCore1High)
-    {
-      vTaskDelete(hCore1High);
-      hCore1High = nullptr;
-    }
+    initialized_ = true;
   }
 
   AutoTaskClass AutoTask;
