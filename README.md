@@ -6,14 +6,14 @@ Helper library for ESP32 Arduino to run FreeRTOS tasks easily. Call `begin()` on
 
 Defaults:
 - `periodMs = 1`
-- `stackSize = ARDUINO_LOOP_STACK_SIZE` (ESP32 Arduino’s default: 8192 bytes). If you need more, pass `begin(stackBytes)`.
+- `stackSize = ARDUINO_LOOP_STACK_SIZE` (ESP32 Arduino’s default: 8192 words ≈ 32 KB; FreeRTOS stack sizes are in words). If you need more, pass `begin(stackBytes)`.
 - Setting `periodMs = 0` runs as fast as possible but can starve lower-priority tasks; keep it ≥1.
 - Priorities must stay within FreeRTOS limits (`0–24`, higher is higher). For beginners, stick to ~`1–4`.
   - Default priorities: Low=1, Normal=2, High=3 (Core1 Low matches the Arduino `loop()` priority ~1; avoid long non-`delay` work there).
 
 ## Cores and priority (mental model)
 
-- Arduino’s `loop()` runs as a task pinned to Core 1 (priority ~1, stack 8192B). Wi‑Fi/BT system tasks mainly occupy Core 0 at higher priority.
+- Arduino’s `loop()` runs as a task pinned to Core 1 (priority ~1, stack 8192 words ≈ 32 KB). Wi‑Fi/BT system tasks mainly occupy Core 0 at higher priority.
 - This library offers Low / Normal / High hooks on both Core 0 and Core 1, with default priorities `1 / 2 / 3`. Use Normal for work similar to `loop()` but a bit higher priority, High for heavier/urgent work, Low for light background chores. Core1 Low is the same priority as `loop()` (~1); long, non-yielding work there will slow `loop()`, so keep it short and include delays.
 - On single-core ESP32 parts (ESP32-SOLO / ESP32-C3 / C2 / C6 / S2, etc.), Core1 hooks also run on Core0 (only the ordering is separated).
 

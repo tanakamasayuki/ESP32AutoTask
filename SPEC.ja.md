@@ -100,13 +100,13 @@ void setupWithConfig() {
   2. `begin(stackBytes)` … 全タスク共通のスタックサイズだけを上書き（例: `AutoTask.begin(/*stackBytes=*/16384);`）。
   3. `begin(config)` … 上級者向け。優先度や周期、スタックサイズを個別に設定。初心者は触らない前提。
 - weak 関数でサイズを返す方式は「定義場所が増える」「型安全でない」ため初心者向きではないので不採用。
-- デフォルトの目安: `periodMs = 1`、`stackSize = ARDUINO_LOOP_STACK_SIZE`（ESP32 Arduino の標準は 8192 バイト、全タスク共通）。足りないときの症状（Guru Meditation / WDT / 例外）と増やし方の目安（例: 8192→16384）を併記する。
+- デフォルトの目安: `periodMs = 1`、`stackSize = ARDUINO_LOOP_STACK_SIZE`（ESP32 Arduino の標準は 8192 ワード ≒ 32KB、全タスク共通。FreeRTOS のスタックはワード単位）。足りないときの症状（Guru Meditation / WDT / 例外）と増やし方の目安（例: 8192→16384）を併記する。
 - `periodMs = 0` にすると最速実行だが低優先度タスクが走りにくくなるため、原則 1 以上を推奨。
 - 優先度の範囲は FreeRTOS の `0〜24`（大きいほど高い）。初心者向けのプリセットは 1〜4 付近で収める。
 
 ## コアと優先度の例・既存 Arduino との違い
 
-- Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192B）として動く。Wi-Fi/BT などシステムタスクは主にコア0の高優先度で動作。
+- Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192 ワード ≒ 32KB）として動く。Wi-Fi/BT などシステムタスクは主にコア0の高優先度で動作。
 - 本ライブラリはコア0/1それぞれに Low / Normal / High フックを用意し、既定優先度をおおよそ `Low=1 / Normal=2 / High=3` に置く想定。`loop()` と同じ優先度で回したい処理は Core1 Low（長時間ブロックは避ける）、少し上で回す処理は Normal、時間的にシビアなものは High、負荷の低いバックグラウンド処理は Low に寄せる。
 - シングルコアの ESP32シリーズ（ESP32-SOLO / ESP32-C3 / C2 / C6 / S2 など）では Core1 向けフックも Core0 上で実行される（名前だけ分けて順序付けしているイメージ）。
 
