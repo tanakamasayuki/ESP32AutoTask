@@ -97,6 +97,7 @@ ESP32AutoTask::AutoTask.begin(cfg);
 - Task sync basics: Use notifications/queues/mutexes for sharing state. Notifications signal single events, queues pass data in order, mutexes guard shared resources. A dedicated task receiving I2C/SPI requests via queue avoids bus conflicts.  
 - Time accuracy: Task timing is not exact. Use hardware timers (interrupts) plus a notification to the task when you need tighter timing. `vTaskDelayUntil` helps reduce drift compared with plain delays.  
 - Why notifications: A high-priority task can block on a notification; when an interrupt sends the notification, that task resumes immediately, giving near–real-time response.  
+- Task handles: After `begin()`, task handles are available as `ESP32AutoTask::handleCore*` (Low/Normal/High for Core0/Core1) if you need them for monitoring or notifications.  
 - WDT: Hogging the CPU too long trips the watchdog. Split heavy work and insert `delay`/`vTaskDelay`, or lower the priority to let others run.  
 - Panic checklist: (1) Stack shortage → try `begin(stackBytes)`, (2) missing `delay` in loops, (3) heavy work at same priority, (4) simultaneous access to shared resources.  
 - Serial/logging: Heavy `Serial.print` in high-priority tasks can block others. Buffer and flush from a lower-priority or dedicated logging task.  
