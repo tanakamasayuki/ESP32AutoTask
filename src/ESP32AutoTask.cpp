@@ -25,6 +25,14 @@ namespace ESP32AutoTask
     core1.high = {3, kDefaultStackSize, kDefaultPeriodMs};
   }
 
+  // Task handles exposed for external use
+  TaskHandle_t handleCore0Low = nullptr;
+  TaskHandle_t handleCore0Normal = nullptr;
+  TaskHandle_t handleCore0High = nullptr;
+  TaskHandle_t handleCore1Low = nullptr;
+  TaskHandle_t handleCore1Normal = nullptr;
+  TaskHandle_t handleCore1High = nullptr;
+
   namespace
   {
 
@@ -82,12 +90,12 @@ namespace ESP32AutoTask
     g_config = config;
     const UBaseType_t coreForCore1 = (CONFIG_FREERTOS_NUMBER_OF_CORES > 1) ? 1 : 0;
 
-    xTaskCreatePinnedToCore(TaskCore0Low, "AT0L", g_config.core0.low.stackSize, nullptr, g_config.core0.low.priority, nullptr, 0);
-    xTaskCreatePinnedToCore(TaskCore0Normal, "AT0N", g_config.core0.normal.stackSize, nullptr, g_config.core0.normal.priority, nullptr, 0);
-    xTaskCreatePinnedToCore(TaskCore0High, "AT0H", g_config.core0.high.stackSize, nullptr, g_config.core0.high.priority, nullptr, 0);
-    xTaskCreatePinnedToCore(TaskCore1Low, "AT1L", g_config.core1.low.stackSize, nullptr, g_config.core1.low.priority, nullptr, coreForCore1);
-    xTaskCreatePinnedToCore(TaskCore1Normal, "AT1N", g_config.core1.normal.stackSize, nullptr, g_config.core1.normal.priority, nullptr, coreForCore1);
-    xTaskCreatePinnedToCore(TaskCore1High, "AT1H", g_config.core1.high.stackSize, nullptr, g_config.core1.high.priority, nullptr, coreForCore1);
+    xTaskCreatePinnedToCore(TaskCore0Low, "AT0L", g_config.core0.low.stackSize, nullptr, g_config.core0.low.priority, &handleCore0Low, 0);
+    xTaskCreatePinnedToCore(TaskCore0Normal, "AT0N", g_config.core0.normal.stackSize, nullptr, g_config.core0.normal.priority, &handleCore0Normal, 0);
+    xTaskCreatePinnedToCore(TaskCore0High, "AT0H", g_config.core0.high.stackSize, nullptr, g_config.core0.high.priority, &handleCore0High, 0);
+    xTaskCreatePinnedToCore(TaskCore1Low, "AT1L", g_config.core1.low.stackSize, nullptr, g_config.core1.low.priority, &handleCore1Low, coreForCore1);
+    xTaskCreatePinnedToCore(TaskCore1Normal, "AT1N", g_config.core1.normal.stackSize, nullptr, g_config.core1.normal.priority, &handleCore1Normal, coreForCore1);
+    xTaskCreatePinnedToCore(TaskCore1High, "AT1H", g_config.core1.high.stackSize, nullptr, g_config.core1.high.priority, &handleCore1High, coreForCore1);
 
     initialized_ = true;
   }

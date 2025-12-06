@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 #include <cstdint>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 // Hook prototypes (user can override these in their sketch; global namespace for simplicity)
 void LoopCore0_Low();
@@ -55,6 +57,14 @@ namespace ESP32AutoTask
     void startTasks(const Config &config);
     bool initialized_ = false;
   };
+
+  // Task handles (set after begin)
+  extern TaskHandle_t handleCore0Low;
+  extern TaskHandle_t handleCore0Normal;
+  extern TaskHandle_t handleCore0High;
+  extern TaskHandle_t handleCore1Low;
+  extern TaskHandle_t handleCore1Normal;
+  extern TaskHandle_t handleCore1High;
 
   extern AutoTaskClass AutoTask;
 
