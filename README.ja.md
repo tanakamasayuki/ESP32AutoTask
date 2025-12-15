@@ -108,7 +108,7 @@ ESP32AutoTask::AutoTask.begin(cfg);
 
 ## もっと詳しく
 
-設計の考え方や優先度の扱いなど、詳しい技術メモは `SPEC.ja.md` を参照してください。
+設計の考え方や優先度の扱いなど、詳しい技術メモは [SPEC.ja.md](SPEC.ja.md) を参照してください（英語版: [SPEC.md](SPEC.md)）。
 
 ## ライセンス
 

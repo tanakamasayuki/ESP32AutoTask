@@ -108,7 +108,7 @@ ESP32AutoTask::AutoTask.begin(cfg);
 
 ## More
 
-Design notes and rationale are in `SPEC.ja.md` (Japanese).
+Design notes and rationale: [SPEC.md](SPEC.md) (English). Japanese version: [SPEC.ja.md](SPEC.ja.md).
 
 ## License
 
