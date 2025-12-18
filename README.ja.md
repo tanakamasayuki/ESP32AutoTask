@@ -11,6 +11,12 @@ ESP32 の Arduino 環境で FreeRTOS タスクを手軽に使うためのヘル�
 - 優先度は FreeRTOS の範囲（0〜24; 数字が大きいほど高い）に収めてください。初心者は 1〜4 程度にとどめるのが安全です。
   - デフォルト優先度: Low=1, Normal=2, High=3。Core1 Low は `loop()` と同じ優先度 (~1) なので、`delay` なしで長時間処理すると `loop()` が遅くなります。
 
+## 兄弟ライブラリと使い分け
+
+- `ESP32AutoTask`（本ライブラリ）: `LoopCore*_*( )` フックを定義するだけで自動的に回る最小構成。手軽に数個の周期タスクを動かす用途に向きます。
+- [ESP32TaskKit](https://github.com/tanakamasayuki/ESP32TaskKit): FreeRTOS タスクを C++ クラス＋設定オブジェクトで生成・管理。優先度/スタック/周期/コア固定の指定や開始・停止などライフサイクル制御が必要、または多数のタスクを柔軟に扱いたいときはこちらを選びます。
+- [ESP32SyncKit](https://github.com/tanakamasayuki/ESP32SyncKit): Queue / Notify / Semaphore / Mutex の C++ ラッパ。AutoTask や TaskKit と組み合わせ、タスク間や割り込み→タスク間のデータ受け渡し・通知・排他制御に利用します。
+
 ## コアと優先度のイメージ
 
 - Arduino の `loop()` は ESP32 Arduino ではコア1にピン留めされたタスク（優先度 ~1、スタック 8192 ワード ≒ 32KB）として動いています。Wi-Fi/BT などのシステムタスクは主にコア0の高優先度で動きます。

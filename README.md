@@ -11,6 +11,12 @@ Defaults:
 - Priorities must stay within FreeRTOS limits (`0–24`, higher is higher). For beginners, stick to ~`1–4`.
   - Default priorities: Low=1, Normal=2, High=3 (Core1 Low matches the Arduino `loop()` priority ~1; avoid long non-`delay` work there).
 
+## Related libraries (and when to pick them)
+
+- `ESP32AutoTask` (this repo): Define `LoopCore*_*( )` hooks and they auto-run with minimal setup. Best for quick sketches and a handful of simple periodic tasks.
+- [ESP32TaskKit](https://github.com/tanakamasayuki/ESP32TaskKit): C++ task helpers with explicit creation/config objects (priority, stack, period, core pinning, suspend/resume). Choose this when you need more tasks, per-task settings, or lifecycle control beyond the fixed hook set.
+- [ESP32SyncKit](https://github.com/tanakamasayuki/ESP32SyncKit): C++ wrappers for FreeRTOS Queue / Notify / Semaphore / Mutex. Pair it with AutoTask or TaskKit whenever tasks or ISRs need to pass data, events, or share resources safely.
+
 ## Cores and priority (mental model)
 
 - Arduino’s `loop()` runs as a task pinned to Core 1 (priority ~1, stack 8192 words ≈ 32 KB). Wi‑Fi/BT system tasks mainly occupy Core 0 at higher priority.
