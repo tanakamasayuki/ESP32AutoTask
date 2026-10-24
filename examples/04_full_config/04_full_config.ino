@@ -1,5 +1,5 @@
-// en: Template showing every Config field with default values.
-// ja: すべての Config 項目をデフォルト値で明示する雛形。
+// en: Construct an explicit per-hook task configuration
+// ja: 各フックの設定を明示してタスクを開始する
 #include <ESP32AutoTask.h>
 
 // en: Called on Core1 at "Normal" priority (default period 1ms).
@@ -27,6 +27,8 @@ void setup()
   cfg.core1.normal = {2, ARDUINO_LOOP_STACK_SIZE, 1};
   cfg.core1.high = {3, ARDUINO_LOOP_STACK_SIZE, 1};
 
+  // en: Initialize this component after its prerequisites; inspect the returned status where provided.
+  // ja: 前提となる機器を準備してから初期化し、結果を返すAPIでは成否を確認します。
   ESP32AutoTask::AutoTask.begin(cfg);
 }
 

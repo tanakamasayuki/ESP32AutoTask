@@ -11,6 +11,8 @@ Defaults:
 - Priorities must stay within FreeRTOS limits (`0–24`, higher is higher). For beginners, stick to ~`1–4`.
   - Default priorities: Low=1, Normal=2, High=3 (Core1 Low matches the Arduino `loop()` priority ~1; avoid long non-`delay` work there).
 
+Start with the [example workflow](docs/GUIDE_EXAMPLES.md) and [individual example READMEs](examples/README.md) for setup, API sequence, verification and adaptation notes.
+
 ## Related libraries (and when to pick them)
 
 - `ESP32AutoTask` (this repo): Define `LoopCore*_*( )` hooks and they auto-run with minimal setup. Best for quick sketches and a handful of simple periodic tasks.

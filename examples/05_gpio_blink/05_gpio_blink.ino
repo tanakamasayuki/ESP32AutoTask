@@ -1,5 +1,5 @@
-// en: Blink GPIO (on-board LED on many ESP32 boards) every 1000 ms using a hook task.
-// ja: 多くのESP32ボードでLEDが接続されているGPIOを、1秒周期で点滅させる例。
+// en: Toggle an LED from a periodic hook task
+// ja: 周期フックでLED出力を切り替える
 #include <ESP32AutoTask.h>
 
 // en: Define LED pin: prefer LED_BUILTIN if available, otherwise fallback to GPIO2.
@@ -22,7 +22,7 @@ void LoopCore1_Normal()
   state = !state;
 
   // en: Even if there's a long processing in the loop, the next call is adjusted by periodMs.
-  // ja: Loop内で長時間処理をしてもperiodMsで次回呼び出しが調整される。
+  // ja: ループ内で長時間処理をしてもperiodMsで次回呼び出しが調整される。
   delay(100);
 }
 
@@ -36,6 +36,8 @@ void setup()
   ESP32AutoTask::Config cfg;
   cfg.core1.normal.periodMs = 1000;
 
+  // en: Initialize this component after its prerequisites; inspect the returned status where provided.
+  // ja: 前提となる機器を準備してから初期化し、結果を返すAPIでは成否を確認します。
   ESP32AutoTask::AutoTask.begin(cfg);
 }
 

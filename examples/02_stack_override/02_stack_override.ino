@@ -1,5 +1,5 @@
-// en: Override only the common stack size when you suspect the default is too small.
-// ja: デフォルトのスタックが足りない場合に全タスク共通のスタックサイズを上書き。
+// en: Override worker stack storage for a hook workload
+// ja: フックの処理に合わせてスタック容量を指定する
 #include <ESP32AutoTask.h>
 
 volatile uint32_t acc = 0;

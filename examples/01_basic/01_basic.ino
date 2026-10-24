@@ -1,5 +1,5 @@
-// en: Basic usage — start tasks with defaults and implement a single hook.
-// ja: 基本的な使い方。デフォルト設定のままフックを1つだけ実装。
+// en: Start a named hook with the default task configuration
+// ja: 既定設定で名前付きフックを開始する
 #include <ESP32AutoTask.h>
 
 // en: Called on Core1 at "Normal" priority (default period 1ms).
@@ -16,6 +16,8 @@ void LoopCore1_Normal()
 void setup()
 {
   Serial.begin(115200);
+  // en: Initialize this component after its prerequisites; inspect the returned status where provided.
+  // ja: 前提となる機器を準備してから初期化し、結果を返すAPIでは成否を確認します。
   ESP32AutoTask::AutoTask.begin(); // en: Use defaults (period=1ms, stack=ARDUINO_LOOP_STACK_SIZE)
                                    // ja: デフォルト設定で開始（period=1ms, stack=ARDUINO_LOOP_STACK_SIZE）
 }

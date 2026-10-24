@@ -1,5 +1,5 @@
-// en: Use Config to tweak per-hook priority/period while keeping most defaults.
-// ja: Config で一部の優先度/周期だけを調整し、他はデフォルトを活かす。
+// en: Change selected hook periods and priorities
+// ja: 一部のフックの周期と優先度を変更する
 #include <ESP32AutoTask.h>
 
 void LoopCore0_Low()
@@ -33,9 +33,13 @@ void setup()
   // ja: スタックはデフォルトのまま、優先度と周期だけ調整。
   cfg.core0.low.priority = 1;  // en/ja: leave as default
   cfg.core0.low.periodMs = 10; // en: slow down Low to 10ms / ja: Lowを10ms周期に
-  cfg.core1.high.priority = 4; // en: boost Core1 High / ja: Core1 Highを少し上げる
+  // en: boost Core1 High
+  // ja: Core1 Highを少し上げる
+  cfg.core1.high.priority = 4;
   cfg.core1.high.periodMs = 1; // en/ja: keep tight loop
 
+  // en: Initialize this component after its prerequisites; inspect the returned status where provided.
+  // ja: 前提となる機器を準備してから初期化し、結果を返すAPIでは成否を確認します。
   ESP32AutoTask::AutoTask.begin(cfg);
 }
 
